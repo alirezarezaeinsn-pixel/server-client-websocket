@@ -4,8 +4,10 @@ import sys
 
 import websockets as ws
 
-HOST = '127.0.0.1'
-PORT = 54721
+from protocol import Message, chat_message
+
+HOST = os.getenv("WS_HOST", "127.0.0.1")
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.getenv("WS_PORT", "54721"))
 
 
 async def main():
@@ -13,9 +15,13 @@ async def main():
     print(f"Connecting to WebSocket server at {uri}...")
     async with ws.connect(uri) as websocket:
         print(f"Connected to WebSocket server at {uri}!")
-        await websocket.send("Hello Server!")
-        response = await websocket.recv()
-        print(f"Server response: {response}")
+        message = chat_message(f"Hello Server! {PORT}")
+        print(f"Sending: {message.to_json()}")
+        await websocket.send(message.to_json())
+
+        response = Message.from_json(await websocket.recv())
+        print(f"Server response type: {response.type}")
+        print(f"Server response data: {response.data}")
 
 
 if __name__ == "__main__":
